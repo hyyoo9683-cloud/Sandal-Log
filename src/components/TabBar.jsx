@@ -54,8 +54,34 @@ function HistoryIcon({ active }) {
 
 export default function TabBar({ active, onChange }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 mx-auto max-w-app bg-white border-t border-[#e7e2d5] safe-bottom z-40">
-      <div className="grid grid-cols-5">
+    <>
+      {/* 모바일: 하단 탭바 */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 mx-auto max-w-app bg-white border-t border-[#e7e2d5] safe-bottom z-40">
+        <div className="grid grid-cols-5">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = active === tab.key
+            return (
+              <button
+                key={tab.key}
+                onClick={() => onChange(tab.key)}
+                className="flex flex-col items-center justify-center gap-1 py-2.5"
+              >
+                <Icon active={isActive} />
+                <span
+                  className={`text-[10px] ${isActive ? 'text-forest font-semibold' : 'text-[#9ca38f]'}`}
+                >
+                  {tab.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+
+      {/* PC: 좌측 사이드바 */}
+      <nav className="hidden md:flex md:flex-col md:w-52 md:shrink-0 md:sticky md:top-10 md:self-start md:gap-1">
+        <p className="px-3 pb-5 text-[16px] font-bold text-forest">🌿 산들로그</p>
         {TABS.map((tab) => {
           const Icon = tab.icon
           const isActive = active === tab.key
@@ -63,18 +89,20 @@ export default function TabBar({ active, onChange }) {
             <button
               key={tab.key}
               onClick={() => onChange(tab.key)}
-              className="flex flex-col items-center justify-center gap-1 py-2.5"
+              className={`flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition ${
+                isActive ? 'bg-cardgreen' : 'hover:bg-cardgreen/50'
+              }`}
             >
               <Icon active={isActive} />
               <span
-                className={`text-[10px] ${isActive ? 'text-forest font-semibold' : 'text-[#9ca38f]'}`}
+                className={`text-[14px] ${isActive ? 'text-forest font-semibold' : 'text-[#9ca38f]'}`}
               >
                 {tab.label}
               </span>
             </button>
           )
         })}
-      </div>
-    </nav>
+      </nav>
+    </>
   )
 }
