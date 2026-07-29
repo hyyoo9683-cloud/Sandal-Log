@@ -3,8 +3,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 
-// 참고: 아래 모델명은 필요 시 사용 가능한 최신 모델명으로 교체하세요.
-const MODEL = 'claude-sonnet-4-6'
+const MODEL = 'claude-sonnet-5'
 
 const SYSTEM_PROMPTS = {
   modeA: `You are a friendly English learning assistant for Korean speakers.
@@ -102,12 +101,14 @@ export default async function handler(req, res) {
 
     const response = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 2048,
+      thinking: { type: 'disabled' },
       system: SYSTEM_PROMPTS[type],
       messages: [{ role: 'user', content: buildUserMessage(type, text) }]
     })
 
-    const raw = response.content?.[0]?.text || ''
+    // content[0]이 항상 text 블록이라는 보장이 없으므로(예: thinking 블록이 먼저 올 수 있음) 타입으로 찾는다.
+    const raw = response.content?.find((block) => block.type === 'text')?.text || ''
     const parsed = parseJsonSafely(raw)
 
     if (!parsed) {
@@ -117,7 +118,12 @@ export default async function handler(req, res) {
 
     res.status(200).json(parsed)
   } catch (err) {
-    console.error('AI request failed:', err)
+    console.error('AI request failed:', {
+      status: err?.status,
+      name: err?.name,
+      message: err?.message,
+      error: err?.error
+    })
     res.status(500).json({ message: 'AI 요청 중 문제가 발생했어요. 잠시 후 다시 시도해주세요 🙏' })
   }
 }
