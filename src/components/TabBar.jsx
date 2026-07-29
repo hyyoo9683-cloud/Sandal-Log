@@ -2,7 +2,8 @@ const TABS = [
   { key: 'home', label: '홈', icon: HomeIcon },
   { key: 'record', label: '기록', icon: RecordIcon },
   { key: 'news', label: '뉴스', icon: NewsIcon },
-  { key: 'podcast', label: '팟캐스트', icon: PodcastIcon }
+  { key: 'podcast', label: '팟캐스트', icon: PodcastIcon },
+  { key: 'history', label: '기록함', icon: HistoryIcon }
 ]
 
 function HomeIcon({ active }) {
@@ -41,10 +42,20 @@ function PodcastIcon({ active }) {
   )
 }
 
+function HistoryIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20C9.5 20 7.26 18.86 5.79 17.06" stroke={active ? '#1a3d0a' : '#9ca38f'} strokeWidth="2" strokeLinecap="round" />
+      <path d="M4 20V17.06H6.94" stroke={active ? '#1a3d0a' : '#9ca38f'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 8V12L14.5 13.5" stroke={active ? '#1a3d0a' : '#9ca38f'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function TabBar({ active, onChange }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 mx-auto max-w-app bg-white border-t border-[#e7e2d5] safe-bottom z-40">
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         {TABS.map((tab) => {
           const Icon = tab.icon
           const isActive = active === tab.key
@@ -56,7 +67,7 @@ export default function TabBar({ active, onChange }) {
             >
               <Icon active={isActive} />
               <span
-                className={`text-[11px] ${isActive ? 'text-forest font-semibold' : 'text-[#9ca38f]'}`}
+                className={`text-[10px] ${isActive ? 'text-forest font-semibold' : 'text-[#9ca38f]'}`}
               >
                 {tab.label}
               </span>

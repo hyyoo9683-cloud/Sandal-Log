@@ -4,6 +4,7 @@ import Home from './screens/Home.jsx'
 import Record from './screens/Record.jsx'
 import News from './screens/News.jsx'
 import Podcast from './screens/Podcast.jsx'
+import History from './screens/History.jsx'
 
 export default function App() {
   const [tab, setTab] = useState('home')
@@ -24,6 +25,7 @@ export default function App() {
         )}
         {tab === 'news' && <News onWriteAbout={goToRecord} />}
         {tab === 'podcast' && <Podcast />}
+        {tab === 'history' && <History />}
       </div>
       <TabBar active={tab} onChange={setTab} />
     </div>
