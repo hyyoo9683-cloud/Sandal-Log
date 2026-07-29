@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getKoreanSuggestions, getEnglishCorrections } from '../utils/api.js'
 import { getDraft, saveDraft, clearDraft, addRecord } from '../utils/storage.js'
 import { fileToResizedDataUrl } from '../utils/image.js'
+import SpeakButton from '../components/SpeakButton.jsx'
 
 const MODE_A = 'A'
 const MODE_B = 'B'
@@ -143,7 +144,10 @@ export default function Record({ seed, onDone }) {
 
         {saved.english && (
           <div className="w-full bg-cardgreen rounded-card p-5 mb-4 text-left">
-            <p className="text-[15px] font-bold text-forest">{saved.english}</p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-[15px] font-bold text-forest">{saved.english}</p>
+              <SpeakButton text={saved.english} className="mt-0.5" />
+            </div>
             {saved.korean && <p className="text-[13px] text-forest/70 mt-1">{saved.korean}</p>}
           </div>
         )}

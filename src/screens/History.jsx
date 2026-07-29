@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getRecords } from '../utils/storage.js'
+import SpeakButton from '../components/SpeakButton.jsx'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -54,7 +55,10 @@ export default function History() {
 
             {r.english ? (
               <>
-                <p className="text-[15px] font-bold text-forest">{r.english}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[15px] font-bold text-forest">{r.english}</p>
+                  <SpeakButton text={r.english} className="mt-0.5" />
+                </div>
                 {r.korean && <p className="text-[13px] text-forest/70 mt-1">{r.korean}</p>}
                 <p className="text-[12px] text-forest/40 mt-2 italic">{r.original}</p>
               </>
