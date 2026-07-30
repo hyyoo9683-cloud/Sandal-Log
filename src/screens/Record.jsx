@@ -30,7 +30,6 @@ export default function Record({ seed, onDone }) {
   const [photo, setPhoto] = useState(null)
   const [saved, setSaved] = useState(null)
   const lastFetchedText = useRef('')
-  const debounceRef = useRef(null)
 
   // 임시저장 복원 (seed가 없을 때만)
   useEffect(() => {
@@ -52,25 +51,23 @@ export default function Record({ seed, onDone }) {
     saveDraft({ mode, text, suggestions, selectedIndex, photo })
   }, [mode, text, suggestions, selectedIndex, photo, saved])
 
-  // 5자 이상 입력 시 AI 자동 호출 (디바운스)
+  // 글자 수가 부족해지면 이전 제안은 정리 (자동 호출은 하지 않음 - 엔터 눌렀을 때만 호출)
   useEffect(() => {
-    if (saved) return
     if (text.trim().length < 5) {
       setSuggestions([])
       setSelectedIndex(null)
       setError(null)
-      return
     }
+  }, [text])
+
+  function handleTextKeyDown(e) {
+    if (e.key !== 'Enter' || e.shiftKey) return
+    if (saved || loading) return
+    if (text.trim().length < 5) return
+    e.preventDefault()
     if (text === lastFetchedText.current) return
-
-    clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      fetchSuggestions(text)
-    }, 700)
-
-    return () => clearTimeout(debounceRef.current)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, mode])
+    fetchSuggestions(text)
+  }
 
   async function fetchSuggestions(value) {
     setLoading(true)
@@ -209,10 +206,11 @@ export default function Record({ seed, onDone }) {
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleTextKeyDown}
         placeholder={
           mode === MODE_A
-            ? '오늘 있었던 일을 한국어로 적어보세요...'
-            : 'Write about your day in English...'
+            ? '오늘 있었던 일을 한국어로 적어보세요... (엔터로 AI 제안 받기)'
+            : 'Write about your day in English... (Press Enter for AI suggestions)'
         }
         rows={4}
         className="w-full bg-white border border-[#e7e2d5] rounded-card p-4 text-[15px] text-forest placeholder:text-forest/30 focus:outline-none focus:border-sage resize-none"
