@@ -3,7 +3,8 @@ const TABS = [
   { key: 'record', label: '기록', icon: RecordIcon },
   { key: 'news', label: '뉴스', icon: NewsIcon },
   { key: 'podcast', label: '팟캐스트', icon: PodcastIcon },
-  { key: 'history', label: '기록함', icon: HistoryIcon }
+  { key: 'history', label: '기록함', icon: HistoryIcon },
+  { key: 'pronunciation', label: '발음', icon: PronunciationIcon }
 ]
 
 function HomeIcon({ active }) {
@@ -52,12 +53,22 @@ function HistoryIcon({ active }) {
   )
 }
 
+function PronunciationIcon({ active }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M8 5C6 6.5 5 9 5 12C5 15 6 17.5 8 19" stroke={active ? '#1a3d0a' : '#9ca38f'} strokeWidth="2" strokeLinecap="round" />
+      <path d="M16 5C18 6.5 19 9 19 12C19 15 18 17.5 16 19" stroke={active ? '#1a3d0a' : '#9ca38f'} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="2.5" stroke={active ? '#1a3d0a' : '#9ca38f'} strokeWidth="2" />
+    </svg>
+  )
+}
+
 export default function TabBar({ active, onChange }) {
   return (
     <>
       {/* 모바일: 하단 탭바 */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 mx-auto max-w-app bg-white border-t border-[#e7e2d5] safe-bottom z-40">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {TABS.map((tab) => {
             const Icon = tab.icon
             const isActive = active === tab.key
