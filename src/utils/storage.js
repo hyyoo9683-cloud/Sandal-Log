@@ -37,6 +37,16 @@ export function addRecord(record) {
   return newRecord
 }
 
+export function updateRecord(id, updates) {
+  const records = getRecords()
+  const index = records.findIndex((r) => r.id === id)
+  if (index === -1) return null
+  const updated = { ...records[index], ...updates }
+  records[index] = updated
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(records))
+  return updated
+}
+
 // ---- 임시저장 ----
 export function getDraft() {
   return safeParse(localStorage.getItem(DRAFT_KEY), null)

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getRecords } from '../utils/storage.js'
+import { getRecords, updateRecord } from '../utils/storage.js'
 import SpeakButton from '../components/SpeakButton.jsx'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -18,12 +18,84 @@ function modeLabel(mode) {
   return mode === 'B' ? '영어로 씀' : '한국어로 씀'
 }
 
+const inputClass =
+  'w-full bg-cream border border-[#e7e2d5] rounded-[10px] p-2.5 text-[13px] text-forest placeholder:text-forest/30 focus:outline-none focus:border-sage resize-none'
+
+function RecordEditForm({ record, onSave, onCancel }) {
+  const [original, setOriginal] = useState(record.original || '')
+  const [english, setEnglish] = useState(record.english || '')
+  const [korean, setKorean] = useState(record.korean || '')
+
+  function handleSave() {
+    if (!original.trim()) return
+    onSave({
+      original: original.trim(),
+      english: record.english !== null ? english.trim() || null : null,
+      korean: record.korean !== null ? korean.trim() || null : null
+    })
+  }
+
+  return (
+    <div className="space-y-2">
+      {record.english !== null && (
+        <>
+          <textarea
+            value={english}
+            onChange={(e) => setEnglish(e.target.value)}
+            rows={2}
+            placeholder="영어 문장"
+            className={inputClass}
+          />
+          <textarea
+            value={korean}
+            onChange={(e) => setKorean(e.target.value)}
+            rows={2}
+            placeholder="한글 번역"
+            className={inputClass}
+          />
+        </>
+      )}
+      <textarea
+        value={original}
+        onChange={(e) => setOriginal(e.target.value)}
+        rows={2}
+        placeholder="원문"
+        className={inputClass}
+      />
+      <div className="flex justify-end gap-2 pt-1">
+        <button
+          onClick={onCancel}
+          className="text-[12px] font-semibold text-forest/60 px-3 py-1.5 rounded-full"
+        >
+          취소
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={!original.trim()}
+          className="text-[12px] font-semibold text-white bg-forest disabled:bg-forest/30 px-3.5 py-1.5 rounded-full"
+        >
+          저장
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function History() {
   const [records, setRecords] = useState([])
+  const [editingId, setEditingId] = useState(null)
 
   useEffect(() => {
     setRecords(getRecords())
   }, [])
+
+  function handleSaveEdit(id, updates) {
+    const updated = updateRecord(id, updates)
+    if (updated) {
+      setRecords((prev) => prev.map((r) => (r.id === id ? updated : r)))
+    }
+    setEditingId(null)
+  }
 
   return (
     <div className="px-5 pt-6">
@@ -44,50 +116,73 @@ export default function History() {
       )}
 
       <div className="space-y-3 pb-4">
-        {records.map((r) => (
-          <div key={r.id} className="bg-white border border-[#e7e2d5] rounded-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-forest bg-cardgreen px-2 py-0.5 rounded-full">
-                {modeLabel(r.mode)}
-              </span>
-              <span className="text-[11px] text-forest/40">{formatDate(r.createdAt)}</span>
-            </div>
-
-            {r.english ? (
-              <>
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[15px] font-bold text-forest">{r.english}</p>
-                  <SpeakButton text={r.english} className="mt-0.5" />
+        {records.map((r) => {
+          const isEditing = editingId === r.id
+          return (
+            <div key={r.id} className="bg-white border border-[#e7e2d5] rounded-card p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-forest bg-cardgreen px-2 py-0.5 rounded-full">
+                  {modeLabel(r.mode)}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-forest/40">{formatDate(r.createdAt)}</span>
+                  {!isEditing && (
+                    <button
+                      onClick={() => setEditingId(r.id)}
+                      className="text-[11px] font-semibold text-forest/60 bg-cardgreen px-2 py-0.5 rounded-full"
+                    >
+                      ✏️ 수정
+                    </button>
+                  )}
                 </div>
-                {r.korean && <p className="text-[13px] text-forest/70 mt-1">{r.korean}</p>}
-                <p className="text-[12px] text-forest/40 mt-2 italic">{r.original}</p>
-              </>
-            ) : (
-              <p className="text-[14px] text-forest/80 leading-relaxed">{r.original}</p>
-            )}
-
-            {r.words?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {r.words.map((w, i) => (
-                  <span
-                    key={i}
-                    className="text-[11px] font-semibold text-forest bg-cardgreen px-2 py-1 rounded-full"
-                  >
-                    {w.word} · {w.meaning}
-                  </span>
-                ))}
               </div>
-            )}
 
-            {r.photo && (
-              <img
-                src={r.photo}
-                alt="기록 사진"
-                className="w-full max-h-48 object-cover rounded-[10px] mt-3"
-              />
-            )}
-          </div>
-        ))}
+              {isEditing ? (
+                <RecordEditForm
+                  record={r}
+                  onCancel={() => setEditingId(null)}
+                  onSave={(updates) => handleSaveEdit(r.id, updates)}
+                />
+              ) : (
+                <>
+                  {r.english ? (
+                    <>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[15px] font-bold text-forest">{r.english}</p>
+                        <SpeakButton text={r.english} className="mt-0.5" />
+                      </div>
+                      {r.korean && <p className="text-[13px] text-forest/70 mt-1">{r.korean}</p>}
+                      <p className="text-[12px] text-forest/40 mt-2 italic">{r.original}</p>
+                    </>
+                  ) : (
+                    <p className="text-[14px] text-forest/80 leading-relaxed">{r.original}</p>
+                  )}
+
+                  {r.words?.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {r.words.map((w, i) => (
+                        <span
+                          key={i}
+                          className="text-[11px] font-semibold text-forest bg-cardgreen px-2 py-1 rounded-full"
+                        >
+                          {w.word} · {w.meaning}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {r.photo && (
+                    <img
+                      src={r.photo}
+                      alt="기록 사진"
+                      className="w-full max-h-48 object-cover rounded-[10px] mt-3"
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
