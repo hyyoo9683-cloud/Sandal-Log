@@ -1,6 +1,6 @@
-// 한국인이 자주 헷갈리는 영어 발음 가이드 (정적 데이터, AI 호출 없음)
+// 한국인이 자주 헷갈리는 발음 가이드 (정적 데이터, AI 호출 없음)
 
-export const PRONUNCIATION_TOPICS = [
+export const EN_PRONUNCIATION_TOPICS = [
   {
     id: 'r-vs-l',
     emoji: '👅',
@@ -90,3 +90,79 @@ export const PRONUNCIATION_TOPICS = [
     ]
   }
 ]
+
+export const FR_PRONUNCIATION_TOPICS = [
+  {
+    id: 'fr-r',
+    emoji: '🗣️',
+    title: '프랑스어 R',
+    tip: '한국어 ㄹ이나 영어 R과 완전히 달라요. 혀 끝은 아래 앞니 뒤에 두고, 목구멍 안쪽에서 가글하듯 울려서 내는 소리예요.',
+    examples: [
+      { word: 'rouge', note: '빨간색 — 목구멍에서 가글하듯' },
+      { word: 'rue', note: '거리, 길' },
+      { word: 'Paris', note: '파리 — 끝의 r도 목구멍 소리' },
+      { word: 'merci', note: '고마워요' }
+    ]
+  },
+  {
+    id: 'fr-nasal',
+    emoji: '👃',
+    title: '콧소리 모음 (an / on / in)',
+    tip: '한국어엔 없는 소리예요. 입은 모음 모양을 만들되, 입으로 나가는 공기를 막고 코로 소리를 내보내요.',
+    examples: [
+      { word: 'bon', note: '좋은 — [옹] 콧소리' },
+      { word: 'pain', note: '빵 — [앙] 콧소리' },
+      { word: 'enfant', note: '아이 — [엉펑] 콧소리 두 번' },
+      { word: 'un', note: '하나 — [엉] 콧소리' }
+    ]
+  },
+  {
+    id: 'fr-silent-consonant',
+    emoji: '🤫',
+    title: '끝자음 묵음',
+    tip: '단어 끝의 자음은 대부분 소리 내지 않아요. c, r, f, l로 끝나면 대체로 소리를 내는 편이에요(단어 "CaReFuL"로 외워보세요).',
+    examples: [
+      { word: 'petit', note: '작은 — 끝의 t는 묵음' },
+      { word: 'beaucoup', note: '많이 — 끝의 p는 묵음' },
+      { word: 'chat', note: '고양이 — 끝의 t는 묵음' },
+      { word: 'chef', note: '셰프, 우두머리 — f는 소리 냄 (CaReFuL)' }
+    ]
+  },
+  {
+    id: 'fr-liaison',
+    emoji: '🔗',
+    title: '리에종 (연음)',
+    tip: '평소엔 묵음인 끝자음이, 다음 단어가 모음으로 시작하면 이어서 소리가 나요. 단어를 뚝뚝 끊지 말고 연결해서 읽어보세요.',
+    examples: [
+      { word: 'les amis', note: '친구들 — "레자미"처럼 이어짐' },
+      { word: 'vous avez', note: '당신은 가지고 있다 — "부자베"' },
+      { word: 'nous avons', note: '우리는 가지고 있다 — "누자봉"' }
+    ]
+  },
+  {
+    id: 'fr-u-vs-ou',
+    emoji: '👄',
+    title: 'U vs OU',
+    tip: 'u [y]는 "이" 입모양을 만든 채로 입술만 동그랗게 오므려서 내는, 한국어에 없는 소리예요. ou [u]는 한국어 "우"와 비슷해요.',
+    examples: [
+      { word: 'tu', note: '너 — u 발음, 입술 동그랗게' },
+      { word: 'tout', note: '모두 — ou 발음, 한국어 "우"' },
+      { word: 'rue', note: '거리 — u 발음' },
+      { word: 'roue', note: '바퀴 — ou 발음' }
+    ]
+  },
+  {
+    id: 'fr-accent',
+    emoji: '📐',
+    title: '악상(accent)에 따른 모음 구분',
+    tip: 'é는 입을 옆으로 당겨서 짧고 또렷하게 [에], è/ê는 입을 좀 더 벌려서 [애]에 가깝게 발음해요.',
+    examples: [
+      { word: 'étudiant', note: '학생 — é는 [에]' },
+      { word: 'père', note: '아버지 — è는 좀 더 벌어진 [애]' },
+      { word: 'être', note: '~이다 — ê도 벌어진 소리' }
+    ]
+  }
+]
+
+// 하위 호환용 (예전엔 영어 목록만 있었음)
+export const PRONUNCIATION_TOPICS = EN_PRONUNCIATION_TOPICS

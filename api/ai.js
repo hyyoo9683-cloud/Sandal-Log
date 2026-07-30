@@ -1,35 +1,52 @@
 // Vercel Serverless Function - 모든 AI 요청을 여기서 처리
-// POST /api/ai  body: { type: 'modeA' | 'modeB' | 'culture', text?: string }
+// POST /api/ai  body: { type: 'modeA' | 'modeB' | 'culture' | 'topics', text?: string, lang?: 'en' | 'fr' }
 
 import Anthropic from '@anthropic-ai/sdk'
 
 const MODEL = 'claude-sonnet-5'
 
-const SYSTEM_PROMPTS = {
-  modeA: `You are a friendly English learning assistant for Korean speakers.
-Given Korean text, suggest 3 natural English sentences.
+const LANGUAGE_NAMES = { en: 'English', fr: 'French' }
+
+function resolveLangName(lang) {
+  return LANGUAGE_NAMES[lang] || LANGUAGE_NAMES.en
+}
+
+// modeA/modeB는 언어(영어/프랑스어)에 따라 프롬프트가 달라져서 함수로 생성한다.
+// JSON 키는 "target"으로 언어중립적으로 둬서, 프랑스어를 요청할 때 "english"라는
+// 필드명이 모델을 헷갈리게 하지 않도록 한다.
+function modeAPrompt(lang) {
+  const langName = resolveLangName(lang)
+  return `You are a friendly ${langName} learning assistant for Korean speakers.
+Given Korean text, suggest 3 natural ${langName} sentences.
 Return ONLY this JSON, no markdown:
 {
   "suggestions": [
     {
-      "english": string,
+      "target": string (in ${langName}),
       "korean": string,
-      "words": [{"word": string, "meaning": string}]
+      "words": [{"word": string (in ${langName}), "meaning": string (Korean)}]
     }
   ]
-}`,
-  modeB: `You are a friendly English learning assistant for Korean speakers.
-Given an English sentence, suggest 3 improved natural versions.
+}`
+}
+
+function modeBPrompt(lang) {
+  const langName = resolveLangName(lang)
+  return `You are a friendly ${langName} learning assistant for Korean speakers.
+Given a ${langName} sentence, suggest 3 improved natural versions.
 Return ONLY this JSON, no markdown:
 {
   "suggestions": [
     {
-      "english": string,
+      "target": string (in ${langName}),
       "korean": string,
       "change": string (Korean explanation of what changed)
     }
   ]
-}`,
+}`
+}
+
+const STATIC_SYSTEM_PROMPTS = {
   culture: `You are a cultural guide for Korean people learning English.
 Generate one cultural insight card in JSON.
 Return ONLY this JSON, no markdown:
@@ -65,6 +82,14 @@ Return ONLY this JSON, no markdown:
 }`
 }
 
+const VALID_TYPES = new Set(['modeA', 'modeB', 'culture', 'topics'])
+
+function buildSystemPrompt(type, lang) {
+  if (type === 'modeA') return modeAPrompt(lang)
+  if (type === 'modeB') return modeBPrompt(lang)
+  return STATIC_SYSTEM_PROMPTS[type]
+}
+
 function buildUserMessage(type, text) {
   if (type === 'culture') {
     return '오늘의 문화 카드를 하나 생성해주세요. 매번 다른 주제로 다양하게 만들어주세요.'
@@ -95,9 +120,9 @@ export default async function handler(req, res) {
     return
   }
 
-  const { type, text } = req.body || {}
+  const { type, text, lang } = req.body || {}
 
-  if (!SYSTEM_PROMPTS[type]) {
+  if (!VALID_TYPES.has(type)) {
     res.status(400).json({ message: '알 수 없는 요청이에요. 다시 시도해주세요.' })
     return
   }
@@ -120,7 +145,7 @@ export default async function handler(req, res) {
       model: MODEL,
       max_tokens: 2048,
       thinking: { type: 'disabled' },
-      system: SYSTEM_PROMPTS[type],
+      system: buildSystemPrompt(type, lang),
       messages: [{ role: 'user', content: buildUserMessage(type, text) }]
     })
 

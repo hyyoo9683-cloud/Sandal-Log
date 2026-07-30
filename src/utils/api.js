@@ -21,12 +21,12 @@ async function callAI(type, payload) {
   }
 }
 
-export function getKoreanSuggestions(koreanText) {
-  return callAI('modeA', { text: koreanText })
+export function getKoreanSuggestions(koreanText, lang = 'en') {
+  return callAI('modeA', { text: koreanText, lang })
 }
 
-export function getEnglishCorrections(englishText) {
-  return callAI('modeB', { text: englishText })
+export function getTargetCorrections(targetText, lang = 'en') {
+  return callAI('modeB', { text: targetText, lang })
 }
 
 export function getCultureCard() {

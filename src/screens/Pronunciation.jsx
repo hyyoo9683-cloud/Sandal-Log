@@ -1,19 +1,49 @@
 import { useState } from 'react'
-import { PRONUNCIATION_TOPICS } from '../utils/pronunciationData.js'
+import { EN_PRONUNCIATION_TOPICS, FR_PRONUNCIATION_TOPICS } from '../utils/pronunciationData.js'
 import SpeakButton from '../components/SpeakButton.jsx'
 
+const LANGUAGES = [
+  { code: 'en', label: '영어', flag: '🇺🇸', speech: 'en-US', topics: EN_PRONUNCIATION_TOPICS },
+  { code: 'fr', label: '프랑스어', flag: '🇫🇷', speech: 'fr-FR', topics: FR_PRONUNCIATION_TOPICS }
+]
+
 export default function Pronunciation() {
-  const [openId, setOpenId] = useState(PRONUNCIATION_TOPICS[0]?.id ?? null)
+  const [lang, setLang] = useState('en')
+  const current = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0]
+  const [openId, setOpenId] = useState(current.topics[0]?.id ?? null)
+
+  function switchLang(code) {
+    if (code === lang) return
+    setLang(code)
+    const next = LANGUAGES.find((l) => l.code === code)
+    setOpenId(next?.topics[0]?.id ?? null)
+  }
 
   return (
     <div className="px-5 pt-6 pb-4">
       <h1 className="text-[19px] font-bold text-forest mb-1">발음 가이드</h1>
-      <p className="text-[13px] text-forest/60 mb-5">
-        한국인이 자주 헷갈리는 영어 발음 포인트를 모았어요
+      <p className="text-[13px] text-forest/60 mb-4">
+        한국인이 자주 헷갈리는 발음 포인트를 모았어요
       </p>
 
+      <div className="flex gap-1.5 mb-5">
+        {LANGUAGES.map((l) => (
+          <button
+            key={l.code}
+            onClick={() => switchLang(l.code)}
+            className={`text-[12px] font-semibold rounded-full px-3 py-1.5 transition ${
+              lang === l.code
+                ? 'bg-sage/30 text-forest border border-sage'
+                : 'bg-white text-forest/50 border border-[#e7e2d5]'
+            }`}
+          >
+            {l.flag} {l.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-3">
-        {PRONUNCIATION_TOPICS.map((topic) => {
+        {current.topics.map((topic) => {
           const isOpen = openId === topic.id
           return (
             <div
@@ -48,7 +78,7 @@ export default function Pronunciation() {
                           <p className="text-[14px] font-bold text-forest">{ex.word}</p>
                           <p className="text-[12px] text-forest/60 mt-0.5">{ex.note}</p>
                         </div>
-                        <SpeakButton text={ex.word} />
+                        <SpeakButton text={ex.word} lang={current.speech} />
                       </div>
                     ))}
                   </div>

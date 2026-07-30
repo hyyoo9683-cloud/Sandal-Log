@@ -1,11 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
-import { getKoreanSuggestions, getEnglishCorrections } from '../utils/api.js'
+import { getKoreanSuggestions, getTargetCorrections } from '../utils/api.js'
 import { getDraft, saveDraft, clearDraft, addRecord } from '../utils/storage.js'
 import { fileToResizedDataUrl } from '../utils/image.js'
 import SpeakButton from '../components/SpeakButton.jsx'
 
 const MODE_A = 'A'
 const MODE_B = 'B'
+
+const LANGUAGES = [
+  {
+    code: 'en',
+    label: '영어',
+    flag: '🇺🇸',
+    speech: 'en-US',
+    placeholder: 'Write about your day in English... (Press Enter for AI suggestions)'
+  },
+  {
+    code: 'fr',
+    label: '프랑스어',
+    flag: '🇫🇷',
+    speech: 'fr-FR',
+    placeholder: 'Écrivez votre journée en français... (Appuyez sur Entrée pour des suggestions)'
+  }
+]
+
+function langInfo(code) {
+  return LANGUAGES.find((l) => l.code === code) || LANGUAGES[0]
+}
 
 function seedHint(seed) {
   if (!seed) return null
@@ -22,6 +43,7 @@ function seedHint(seed) {
 
 export default function Record({ seed, onDone }) {
   const [mode, setMode] = useState(MODE_A)
+  const [lang, setLang] = useState('en')
   const [text, setText] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [selectedIndex, setSelectedIndex] = useState(null)
@@ -37,6 +59,7 @@ export default function Record({ seed, onDone }) {
     const draft = getDraft()
     if (draft) {
       setMode(draft.mode || MODE_A)
+      setLang(draft.lang || 'en')
       setText(draft.text || '')
       setSuggestions(draft.suggestions || [])
       setSelectedIndex(draft.selectedIndex ?? null)
@@ -48,8 +71,8 @@ export default function Record({ seed, onDone }) {
   // 자동 임시저장
   useEffect(() => {
     if (saved) return
-    saveDraft({ mode, text, suggestions, selectedIndex, photo })
-  }, [mode, text, suggestions, selectedIndex, photo, saved])
+    saveDraft({ mode, lang, text, suggestions, selectedIndex, photo })
+  }, [mode, lang, text, suggestions, selectedIndex, photo, saved])
 
   // 글자 수가 부족해지면 이전 제안은 정리 (자동 호출은 하지 않음 - 엔터 눌렀을 때만 호출)
   useEffect(() => {
@@ -75,7 +98,9 @@ export default function Record({ seed, onDone }) {
     setSelectedIndex(null)
     try {
       const result =
-        mode === MODE_A ? await getKoreanSuggestions(value) : await getEnglishCorrections(value)
+        mode === MODE_A
+          ? await getKoreanSuggestions(value, lang)
+          : await getTargetCorrections(value, lang)
       setSuggestions(result.suggestions || [])
       lastFetchedText.current = value
     } catch (err) {
@@ -88,6 +113,15 @@ export default function Record({ seed, onDone }) {
   function switchMode(next) {
     if (next === mode) return
     setMode(next)
+    setSuggestions([])
+    setSelectedIndex(null)
+    setError(null)
+    lastFetchedText.current = ''
+  }
+
+  function switchLang(next) {
+    if (next === lang) return
+    setLang(next)
     setSuggestions([])
     setSelectedIndex(null)
     setError(null)
@@ -110,8 +144,9 @@ export default function Record({ seed, onDone }) {
     const chosen = selectedIndex !== null ? suggestions[selectedIndex] : null
     const record = addRecord({
       mode,
+      lang,
       original: text,
-      english: chosen?.english || null,
+      english: chosen?.target || null,
       korean: chosen?.korean || null,
       words: chosen?.words || [],
       change: chosen?.change || null,
@@ -143,7 +178,7 @@ export default function Record({ seed, onDone }) {
           <div className="w-full bg-cardgreen rounded-card p-5 mb-4 text-left">
             <div className="flex items-start justify-between gap-2">
               <p className="text-[15px] font-bold text-forest">{saved.english}</p>
-              <SpeakButton text={saved.english} className="mt-0.5" />
+              <SpeakButton text={saved.english} lang={langInfo(saved.lang).speech} className="mt-0.5" />
             </div>
             {saved.korean && <p className="text-[13px] text-forest/70 mt-1">{saved.korean}</p>}
           </div>
@@ -173,6 +208,7 @@ export default function Record({ seed, onDone }) {
   }
 
   const hint = seedHint(seed)
+  const current = langInfo(lang)
 
   return (
     <div className="px-5 pt-6">
@@ -183,6 +219,22 @@ export default function Record({ seed, onDone }) {
           <p className="text-[13px] text-forest/80">{hint}</p>
         </div>
       )}
+
+      <div className="flex gap-1.5 mb-3">
+        {LANGUAGES.map((l) => (
+          <button
+            key={l.code}
+            onClick={() => switchLang(l.code)}
+            className={`text-[12px] font-semibold rounded-full px-3 py-1.5 transition ${
+              lang === l.code
+                ? 'bg-sage/30 text-forest border border-sage'
+                : 'bg-white text-forest/50 border border-[#e7e2d5]'
+            }`}
+          >
+            {l.flag} {l.label}
+          </button>
+        ))}
+      </div>
 
       <div className="flex bg-cardgreen rounded-full p-1 mb-4">
         <button
@@ -199,7 +251,7 @@ export default function Record({ seed, onDone }) {
             mode === MODE_B ? 'bg-forest text-white' : 'text-forest/60'
           }`}
         >
-          영어로 써요
+          {current.label}로 써요
         </button>
       </div>
 
@@ -210,7 +262,7 @@ export default function Record({ seed, onDone }) {
         placeholder={
           mode === MODE_A
             ? '오늘 있었던 일을 한국어로 적어보세요... (엔터로 AI 제안 받기)'
-            : 'Write about your day in English... (Press Enter for AI suggestions)'
+            : current.placeholder
         }
         rows={4}
         className="w-full bg-white border border-[#e7e2d5] rounded-card p-4 text-[15px] text-forest placeholder:text-forest/30 focus:outline-none focus:border-sage resize-none"
@@ -273,7 +325,7 @@ export default function Record({ seed, onDone }) {
                     : 'bg-white border-[#e7e2d5]'
                 }`}
               >
-                <p className="text-[15px] font-bold text-forest">{s.english}</p>
+                <p className="text-[15px] font-bold text-forest">{s.target}</p>
                 <p className="text-[13px] text-forest/70 mt-1">{s.korean}</p>
 
                 {mode === MODE_A && s.words?.length > 0 && (

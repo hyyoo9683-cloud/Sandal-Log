@@ -4,6 +4,15 @@ import SpeakButton from '../components/SpeakButton.jsx'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
+const LANG_META = {
+  en: { flag: '🇺🇸', name: '영어', speech: 'en-US' },
+  fr: { flag: '🇫🇷', name: '프랑스어', speech: 'fr-FR' }
+}
+
+function langMeta(code) {
+  return LANG_META[code] || LANG_META.en
+}
+
 function formatDate(iso) {
   const d = new Date(iso)
   const m = d.getMonth() + 1
@@ -14,8 +23,9 @@ function formatDate(iso) {
   return `${m}월 ${day}일 (${weekday}) ${hh}:${mm}`
 }
 
-function modeLabel(mode) {
-  return mode === 'B' ? '영어로 씀' : '한국어로 씀'
+function modeLabel(record) {
+  if (record.mode === 'B') return `${langMeta(record.lang).name}로 씀`
+  return '한국어로 씀'
 }
 
 const inputClass =
@@ -43,7 +53,7 @@ function RecordEditForm({ record, onSave, onCancel }) {
             value={english}
             onChange={(e) => setEnglish(e.target.value)}
             rows={2}
-            placeholder="영어 문장"
+            placeholder={`${langMeta(record.lang).name} 문장`}
             className={inputClass}
           />
           <textarea
@@ -121,8 +131,9 @@ export default function History() {
           return (
             <div key={r.id} className="bg-white border border-[#e7e2d5] rounded-card p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-forest bg-cardgreen px-2 py-0.5 rounded-full">
-                  {modeLabel(r.mode)}
+                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-forest bg-cardgreen px-2 py-0.5 rounded-full">
+                  {r.english && <span>{langMeta(r.lang).flag}</span>}
+                  {modeLabel(r)}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-forest/40">{formatDate(r.createdAt)}</span>
@@ -149,7 +160,7 @@ export default function History() {
                     <>
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-[15px] font-bold text-forest">{r.english}</p>
-                        <SpeakButton text={r.english} className="mt-0.5" />
+                        <SpeakButton text={r.english} lang={langMeta(r.lang).speech} className="mt-0.5" />
                       </div>
                       {r.korean && <p className="text-[13px] text-forest/70 mt-1">{r.korean}</p>}
                       <p className="text-[12px] text-forest/40 mt-2 italic">{r.original}</p>
