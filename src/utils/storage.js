@@ -48,6 +48,12 @@ export function updateRecord(id, updates) {
   return updated
 }
 
+export function deleteRecord(id) {
+  const records = getRecords().filter((r) => r.id !== id)
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(records))
+  return records
+}
+
 // ---- 임시저장 ----
 export function getDraft() {
   return safeParse(localStorage.getItem(DRAFT_KEY), null)

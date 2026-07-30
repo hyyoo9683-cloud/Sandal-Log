@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getRecords, updateRecord } from '../utils/storage.js'
+import { getRecords, updateRecord, deleteRecord } from '../utils/storage.js'
 import SpeakButton from '../components/SpeakButton.jsx'
+import ConfirmModal from '../components/ConfirmModal.jsx'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -94,6 +95,7 @@ function RecordEditForm({ record, onSave, onCancel }) {
 export default function History() {
   const [records, setRecords] = useState([])
   const [editingId, setEditingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     setRecords(getRecords())
@@ -105,6 +107,12 @@ export default function History() {
       setRecords((prev) => prev.map((r) => (r.id === id ? updated : r)))
     }
     setEditingId(null)
+  }
+
+  function handleConfirmDelete() {
+    deleteRecord(deletingId)
+    setRecords((prev) => prev.filter((r) => r.id !== deletingId))
+    setDeletingId(null)
   }
 
   return (
@@ -138,12 +146,20 @@ export default function History() {
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-forest/40">{formatDate(r.createdAt)}</span>
                   {!isEditing && (
-                    <button
-                      onClick={() => setEditingId(r.id)}
-                      className="text-[11px] font-semibold text-forest/60 bg-cardgreen px-2 py-0.5 rounded-full"
-                    >
-                      ✏️ 수정
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setEditingId(r.id)}
+                        className="text-[11px] font-semibold text-forest/60 bg-cardgreen px-2 py-0.5 rounded-full"
+                      >
+                        ✏️ 수정
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(r.id)}
+                        className="text-[11px] font-semibold text-[#c94f4f] bg-[#c94f4f]/10 px-2 py-0.5 rounded-full"
+                      >
+                        🗑️ 삭제
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -195,6 +211,18 @@ export default function History() {
           )
         })}
       </div>
+
+      {deletingId && (
+        <ConfirmModal
+          title="이 기록을 삭제할까요?"
+          description="삭제하면 되돌릴 수 없어요."
+          confirmLabel="삭제"
+          cancelLabel="취소"
+          danger
+          onCancel={() => setDeletingId(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      )}
     </div>
   )
 }

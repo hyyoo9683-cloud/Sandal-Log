@@ -3,6 +3,7 @@ import { getKoreanSuggestions, getTargetCorrections } from '../utils/api.js'
 import { getDraft, saveDraft, clearDraft, addRecord } from '../utils/storage.js'
 import { fileToResizedDataUrl } from '../utils/image.js'
 import SpeakButton from '../components/SpeakButton.jsx'
+import ConfirmModal from '../components/ConfirmModal.jsx'
 
 const MODE_A = 'A'
 const MODE_B = 'B'
@@ -51,6 +52,7 @@ export default function Record({ seed, onDone }) {
   const [error, setError] = useState(null)
   const [photo, setPhoto] = useState(null)
   const [saved, setSaved] = useState(null)
+  const [confirmNoAi, setConfirmNoAi] = useState(false)
   const lastFetchedText = useRef('')
 
   // 임시저장 복원 (seed가 없을 때만)
@@ -139,9 +141,17 @@ export default function Record({ seed, onDone }) {
     }
   }
 
-  function handleSave() {
+  function handleSaveClick() {
     if (!text.trim()) return
     const chosen = selectedIndex !== null ? suggestions[selectedIndex] : null
+    if (!chosen) {
+      setConfirmNoAi(true)
+      return
+    }
+    saveRecord(chosen)
+  }
+
+  function saveRecord(chosen) {
     const record = addRecord({
       mode,
       lang,
@@ -351,12 +361,26 @@ export default function Record({ seed, onDone }) {
       </div>
 
       <button
-        onClick={handleSave}
+        onClick={handleSaveClick}
         disabled={!text.trim()}
         className="w-full mt-6 bg-forest disabled:bg-forest/30 text-white text-[15px] font-bold rounded-card py-3.5"
       >
         기록 저장하기
       </button>
+
+      {confirmNoAi && (
+        <ConfirmModal
+          title="AI 교정 없이 기록할까요?"
+          description="추천 문장을 선택하지 않아서 원문 그대로 저장돼요. 교정을 받고 싶다면 취소한 뒤 문장을 쓰고 엔터를 눌러 AI 제안을 받아보세요."
+          confirmLabel="그래도 저장"
+          cancelLabel="취소"
+          onCancel={() => setConfirmNoAi(false)}
+          onConfirm={() => {
+            setConfirmNoAi(false)
+            saveRecord(null)
+          }}
+        />
+      )}
     </div>
   )
 }
