@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
-import { getCultureCard as fetchCultureCard } from '../utils/api.js'
-import { getCultureCard as readCachedCard, saveCultureCard, todayKey } from '../utils/storage.js'
+import { getCultureCard as fetchCultureCard, getTopicRecommendations } from '../utils/api.js'
+import {
+  getCultureCard as readCachedCard,
+  saveCultureCard,
+  todayKey,
+  getRecords,
+  getTopicsCache,
+  saveTopicsCache
+} from '../utils/storage.js'
+import SpeakButton from '../components/SpeakButton.jsx'
+
+const MIN_RECORDS_FOR_TOPICS = 3
+const MAX_ENTRIES_FOR_TOPICS = 20
 
 function getGreeting(hour) {
   if (hour >= 6 && hour < 12) {
@@ -38,9 +49,15 @@ export default function Home({ onStartRecord }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const [topics, setTopics] = useState(null) // null = 아직 로드 전, [] = 추천 없음
+  const [topicsLoading, setTopicsLoading] = useState(false)
+  const [topicsError, setTopicsError] = useState(null)
+  const [expandedTopic, setExpandedTopic] = useState(null)
+
   useEffect(() => {
     setGreeting(getGreeting(new Date().getHours()))
     loadCultureCard()
+    loadTopics()
   }, [])
 
   async function loadCultureCard() {
@@ -60,6 +77,47 @@ export default function Home({ onStartRecord }) {
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadTopics(force = false) {
+    const records = getRecords()
+    if (records.length < MIN_RECORDS_FOR_TOPICS) {
+      setTopics([])
+      return
+    }
+
+    const key = todayKey()
+    if (!force) {
+      const cached = getTopicsCache(key)
+      if (cached) {
+        setTopics(cached)
+        return
+      }
+    }
+
+    const entriesText = records
+      .slice(0, MAX_ENTRIES_FOR_TOPICS)
+      .map((r) => r.original)
+      .filter(Boolean)
+      .join('\n')
+
+    if (!entriesText.trim()) {
+      setTopics([])
+      return
+    }
+
+    setTopicsLoading(true)
+    setTopicsError(null)
+    try {
+      const result = await getTopicRecommendations(entriesText)
+      const list = result.topics || []
+      setTopics(list)
+      saveTopicsCache(list, key)
+    } catch (err) {
+      setTopicsError(err.message)
+    } finally {
+      setTopicsLoading(false)
     }
   }
 
@@ -126,6 +184,84 @@ export default function Home({ onStartRecord }) {
           </div>
         )}
       </div>
+
+      {(topicsLoading || topicsError || (topics && topics.length > 0)) && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-[13px] font-semibold text-forest/60 tracking-wide">
+              나의 기록에서 발견한 주제
+            </h2>
+            {!topicsLoading && (topics?.length > 0 || topicsError) && (
+              <button
+                onClick={() => loadTopics(true)}
+                className="text-[11px] font-semibold text-forest/50 underline"
+              >
+                다시 추천받기
+              </button>
+            )}
+          </div>
+
+          {topicsLoading && (
+            <div className="bg-cardgreen rounded-card p-5 animate-pulse">
+              <div className="h-4 w-24 bg-sage/30 rounded" />
+            </div>
+          )}
+
+          {!topicsLoading && topicsError && (
+            <div className="bg-cardgreen rounded-card p-4">
+              <p className="text-[13px] text-forest/70 mb-2">{topicsError}</p>
+              <button
+                onClick={() => loadTopics(true)}
+                className="text-[13px] font-semibold text-forest underline"
+              >
+                다시 시도하기
+              </button>
+            </div>
+          )}
+
+          {!topicsLoading && !topicsError && topics && topics.length > 0 && (
+            <div className="space-y-2">
+              {topics.map((topic) => {
+                const isOpen = expandedTopic === topic.title
+                return (
+                  <div
+                    key={topic.title}
+                    className="bg-white border border-[#e7e2d5] rounded-card overflow-hidden"
+                  >
+                    <button
+                      onClick={() => setExpandedTopic(isOpen ? null : topic.title)}
+                      className="w-full flex items-center justify-between px-4 py-3"
+                    >
+                      <span className="flex items-center gap-2 text-[14px] font-bold text-forest">
+                        <span>{topic.emoji}</span>
+                        {topic.title}
+                      </span>
+                      <span className="text-[12px] text-forest/40">{isOpen ? '접기' : '보기'}</span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-4 pb-4 pt-3 space-y-2 border-t border-[#e7e2d5]">
+                        {(topic.items || []).map((item, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between gap-2 bg-cardgreen/60 rounded-[10px] px-3 py-2"
+                          >
+                            <div>
+                              <p className="text-[13px] font-semibold text-forest">{item.english}</p>
+                              <p className="text-[12px] text-forest/60">{item.korean}</p>
+                            </div>
+                            <SpeakButton text={item.english} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         onClick={() => onStartRecord(null)}

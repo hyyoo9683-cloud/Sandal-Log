@@ -45,6 +45,23 @@ Return ONLY this JSON, no markdown:
       "example": string
     }
   ]
+}`,
+  topics: `You are a personalized vocabulary coach for a Korean speaker learning English.
+You will be given a list of short diary entries the user recently wrote (in Korean or English), one per line.
+Find 1 to 3 recurring real-life themes/topics that actually appear across these entries (e.g. 집안일, 회사 업무, 운동, 육아, 요리, 육아 등).
+Only suggest themes clearly reflected in the given entries - never invent unrelated ones. If there isn't a clear recurring theme, return fewer topics (even zero).
+For each theme, suggest 4-5 useful English words or short phrases related to that theme, with Korean meanings.
+Return ONLY this JSON, no markdown:
+{
+  "topics": [
+    {
+      "title": string (Korean, short theme name, e.g. "집안일"),
+      "emoji": string,
+      "items": [
+        {"english": string, "korean": string}
+      ]
+    }
+  ]
 }`
 }
 

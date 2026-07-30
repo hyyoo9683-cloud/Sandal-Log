@@ -3,6 +3,7 @@
 const RECORDS_KEY = 'sandalog_records'
 const DRAFT_KEY = 'sandalog_draft'
 const CULTURE_PREFIX = 'sandalog_culture_'
+const TOPICS_PREFIX = 'sandalog_topics_'
 
 function safeParse(raw, fallback) {
   if (!raw) return fallback
@@ -67,4 +68,13 @@ export function getCultureCard(dateKey = todayKey()) {
 
 export function saveCultureCard(card, dateKey = todayKey()) {
   localStorage.setItem(CULTURE_PREFIX + dateKey, JSON.stringify(card))
+}
+
+// ---- 기록 기반 주제 추천 (날짜별 캐싱) ----
+export function getTopicsCache(dateKey = todayKey()) {
+  return safeParse(localStorage.getItem(TOPICS_PREFIX + dateKey), null)
+}
+
+export function saveTopicsCache(topics, dateKey = todayKey()) {
+  localStorage.setItem(TOPICS_PREFIX + dateKey, JSON.stringify(topics))
 }

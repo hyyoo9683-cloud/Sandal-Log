@@ -32,3 +32,7 @@ export function getEnglishCorrections(englishText) {
 export function getCultureCard() {
   return callAI('culture', {})
 }
+
+export function getTopicRecommendations(entriesText) {
+  return callAI('topics', { text: entriesText })
+}
