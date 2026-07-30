@@ -22,7 +22,7 @@ export default function App() {
       <div className="md:flex md:w-full md:max-w-4xl md:items-start md:gap-8 md:px-6 md:py-10">
         <TabBar active={tab} onChange={setTab} />
 
-        <div className="mx-auto max-w-app md:mx-0 md:max-w-xl min-h-screen md:min-h-0 bg-cream md:bg-white relative pb-20 md:pb-10 md:rounded-2xl md:border md:border-[#e7e2d5] md:shadow-sm">
+        <div className="safe-top mx-auto max-w-app md:mx-0 md:max-w-xl min-h-screen md:min-h-0 bg-cream md:bg-white relative pb-20 md:pb-10 md:rounded-2xl md:border md:border-[#e7e2d5] md:shadow-sm">
           {tab === 'home' && <Home onStartRecord={goToRecord} />}
           {tab === 'record' && (
             <Record seed={recordSeed} onDone={() => setRecordSeed(null)} />
