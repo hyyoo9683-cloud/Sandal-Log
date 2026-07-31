@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getKoreanSuggestions, getTargetCorrections } from '../utils/api.js'
 import { getDraft, saveDraft, clearDraft, addRecord } from '../utils/storage.js'
 import { fileToResizedDataUrl } from '../utils/image.js'
+import { canListen, startListening } from '../utils/dictation.js'
 import SpeakButton from '../components/SpeakButton.jsx'
 import ConfirmModal from '../components/ConfirmModal.jsx'
 
@@ -53,7 +54,15 @@ export default function Record({ seed, onDone }) {
   const [photo, setPhoto] = useState(null)
   const [saved, setSaved] = useState(null)
   const [confirmNoAi, setConfirmNoAi] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [dictationError, setDictationError] = useState(null)
   const lastFetchedText = useRef('')
+  const recognizerRef = useRef(null)
+
+  // 화면을 떠날 때 마이크가 계속 켜져있지 않도록 정리
+  useEffect(() => {
+    return () => recognizerRef.current?.stop?.()
+  }, [])
 
   // 임시저장 복원 (seed가 없을 때만)
   useEffect(() => {
@@ -114,6 +123,7 @@ export default function Record({ seed, onDone }) {
 
   function switchMode(next) {
     if (next === mode) return
+    recognizerRef.current?.stop?.()
     setMode(next)
     setSuggestions([])
     setSelectedIndex(null)
@@ -123,11 +133,32 @@ export default function Record({ seed, onDone }) {
 
   function switchLang(next) {
     if (next === lang) return
+    recognizerRef.current?.stop?.()
     setLang(next)
     setSuggestions([])
     setSelectedIndex(null)
     setError(null)
     lastFetchedText.current = ''
+  }
+
+  function toggleListening() {
+    if (listening) {
+      recognizerRef.current?.stop?.()
+      return
+    }
+    setDictationError(null)
+    const recognizeLang = mode === MODE_A ? 'ko-KR' : langInfo(lang).speech
+    recognizerRef.current = startListening(recognizeLang, {
+      onResult: (transcript) => {
+        setText((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript))
+      },
+      onEnd: () => setListening(false),
+      onError: (message) => {
+        setDictationError(message)
+        setListening(false)
+      }
+    })
+    setListening(true)
   }
 
   async function handlePhoto(e) {
@@ -277,6 +308,23 @@ export default function Record({ seed, onDone }) {
         rows={4}
         className="w-full bg-white border border-[#e7e2d5] rounded-card p-4 text-[15px] text-forest placeholder:text-forest/30 focus:outline-none focus:border-sage resize-none"
       />
+
+      {canListen() && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={toggleListening}
+            className={`inline-flex items-center gap-2 text-[13px] font-semibold rounded-full px-3.5 py-2 border transition ${
+              listening
+                ? 'bg-[#c94f4f]/10 border-[#c94f4f] text-[#c94f4f]'
+                : 'bg-white border-[#e7e2d5] text-forest/70'
+            }`}
+          >
+            {listening ? '🔴 듣는 중... (탭하면 종료)' : '🎙️ 말해서 입력하기'}
+          </button>
+          {dictationError && <p className="text-[12px] text-[#c94f4f] mt-2">{dictationError}</p>}
+        </div>
+      )}
 
       <div className="mt-3">
         <label className="inline-flex items-center gap-2 text-[13px] font-semibold text-forest/70 bg-white border border-[#e7e2d5] rounded-full px-3.5 py-2 cursor-pointer">
