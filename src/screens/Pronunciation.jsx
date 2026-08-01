@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { EN_PRONUNCIATION_TOPICS, FR_PRONUNCIATION_TOPICS } from '../utils/pronunciationData.js'
 import SpeakButton from '../components/SpeakButton.jsx'
+import PronunciationCheckButton from '../components/PronunciationCheckButton.jsx'
 
 const LANGUAGES = [
   { code: 'en', label: '영어', flag: '🇺🇸', speech: 'en-US', topics: EN_PRONUNCIATION_TOPICS },
@@ -70,15 +71,15 @@ export default function Pronunciation() {
                   </p>
                   <div className="space-y-2">
                     {topic.examples.map((ex, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between gap-2 bg-cardgreen/60 rounded-[10px] px-3 py-2.5"
-                      >
-                        <div>
-                          <p className="text-[14px] font-bold text-forest">{ex.word}</p>
-                          <p className="text-[12px] text-forest/60 mt-0.5">{ex.note}</p>
+                      <div key={i} className="bg-cardgreen/60 rounded-[10px] px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-[14px] font-bold text-forest">{ex.word}</p>
+                            <p className="text-[12px] text-forest/60 mt-0.5">{ex.note}</p>
+                          </div>
+                          <SpeakButton text={ex.word} lang={current.speech} />
                         </div>
-                        <SpeakButton text={ex.word} lang={current.speech} />
+                        <PronunciationCheckButton text={ex.word} lang={current.speech} />
                       </div>
                     ))}
                   </div>

@@ -58,10 +58,14 @@ export default function Record({ seed, onDone }) {
   const [dictationError, setDictationError] = useState(null)
   const lastFetchedText = useRef('')
   const recognizerRef = useRef(null)
+  const listeningTimeoutRef = useRef(null)
 
   // 화면을 떠날 때 마이크가 계속 켜져있지 않도록 정리
   useEffect(() => {
-    return () => recognizerRef.current?.stop?.()
+    return () => {
+      recognizerRef.current?.stop?.()
+      clearTimeout(listeningTimeoutRef.current)
+    }
   }, [])
 
   // 임시저장 복원 (seed가 없을 때만)
@@ -123,7 +127,7 @@ export default function Record({ seed, onDone }) {
 
   function switchMode(next) {
     if (next === mode) return
-    recognizerRef.current?.stop?.()
+    stopListening()
     setMode(next)
     setSuggestions([])
     setSelectedIndex(null)
@@ -133,7 +137,7 @@ export default function Record({ seed, onDone }) {
 
   function switchLang(next) {
     if (next === lang) return
-    recognizerRef.current?.stop?.()
+    stopListening()
     setLang(next)
     setSuggestions([])
     setSelectedIndex(null)
@@ -141,9 +145,17 @@ export default function Record({ seed, onDone }) {
     lastFetchedText.current = ''
   }
 
+  // 사파리 등 일부 브라우저는 stop() 후 onend가 안 불릴 때가 있어서,
+  // 탭한 즉시 상태를 낙관적으로 바꿔서 버튼이 "듣는 중"에 멈춰있지 않게 한다.
+  function stopListening() {
+    clearTimeout(listeningTimeoutRef.current)
+    recognizerRef.current?.stop?.()
+    setListening(false)
+  }
+
   function toggleListening() {
     if (listening) {
-      recognizerRef.current?.stop?.()
+      stopListening()
       return
     }
     setDictationError(null)
@@ -152,13 +164,22 @@ export default function Record({ seed, onDone }) {
       onResult: (transcript) => {
         setText((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript))
       },
-      onEnd: () => setListening(false),
+      onEnd: () => {
+        clearTimeout(listeningTimeoutRef.current)
+        setListening(false)
+      },
       onError: (message) => {
+        clearTimeout(listeningTimeoutRef.current)
         setDictationError(message)
         setListening(false)
       }
     })
     setListening(true)
+    // 혹시 onend가 끝까지 안 오는 경우를 대비한 안전장치
+    listeningTimeoutRef.current = setTimeout(() => {
+      recognizerRef.current?.stop?.()
+      setListening(false)
+    }, 15000)
   }
 
   async function handlePhoto(e) {
